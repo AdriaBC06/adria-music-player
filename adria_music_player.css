@@ -1,9 +1,9 @@
 /*
-  Refined Wal Player – Glass version
+  Refined Adria Music Player - Glass version
   Designed for Hyprland blur + wal dynamic colors
 */
 
-window#wal-player-window {
+window#adria-music-player-window {
   background: __WAL_BACKGROUND__;
 }
 
@@ -30,17 +30,14 @@ window#wal-player-window {
 
 /* MAIN ROW */
 .main-row {
-  spacing: 14px;
   margin-bottom: 0;
 }
 
 .header-row {
-  spacing: 8px;
   margin-bottom: 10px;
 }
 
 .download-buttons-box {
-  spacing: 4px;
 }
 
 /* COVER */
@@ -59,7 +56,6 @@ window#wal-player-window {
 
 .cover-frame {
   border-radius: 16px;
-  overflow: hidden;
 
   background: rgba(__WAL_FOREGROUND_RGB__, 0.04);
   border: 1px solid rgba(__WAL_FOREGROUND_RGB__, 0.06);
@@ -86,7 +82,6 @@ window#wal-player-window {
 
 /* INFO COLUMN */
 .info-col {
-  spacing: 8px;
 }
 
 /* TITLE */
@@ -106,7 +101,6 @@ window#wal-player-window {
 
 /* CONTROLS */
 .controls {
-  spacing: 12px;
   margin-top: 0;
 }
 
@@ -130,6 +124,16 @@ button.wal-btn {
 button.wal-btn:hover {
   background: rgba(__WAL_COLOR4_RGB__, 0.25);
   border-color: rgba(__WAL_COLOR4_RGB__, 0.35);
+}
+
+button.wal-btn.shuffle-btn:checked {
+  background: rgba(__WAL_COLOR4_RGB__, 0.25);
+  border-color: rgba(__WAL_COLOR4_RGB__, 0.35);
+}
+
+button.wal-btn.shuffle-btn:checked:hover {
+  background: rgba(__WAL_FOREGROUND_RGB__, 0.06);
+  border-color: rgba(__WAL_FOREGROUND_RGB__, 0.08);
 }
 
 button.youtube-btn {
@@ -238,9 +242,6 @@ scale.wal-progress highlight {
 
 /* Slider */
 scale.wal-progress slider {
-  min-width: 12px;
-  min-height: 12px;
-
   border-radius: 999px;
 
   background: __WAL_FOREGROUND__;

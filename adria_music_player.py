@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Wal-integrated floating music player for GTK4/libadwaita on Wayland.
+"""Adria Music Player: floating music player for GTK4/libadwaita on Wayland.
 
 Architecture:
 - Model: PlayerModel
@@ -9,6 +9,7 @@ Architecture:
 
 import json
 import os
+import random
 import re
 import shutil
 import socket
@@ -31,9 +32,9 @@ from gi.repository import Adw, Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango  # noqa: E4
 
 
 WAL_COLORS_PATH = Path.home() / ".cache" / "wal" / "colors.json"
-CSS_TEMPLATE_PATH = Path(__file__).with_name("wal_player.css")
-IPC_SOCKET_PATH = Path(tempfile.gettempdir()) / f"wal-player-mpv-{os.getpid()}.sock"
-APP_ID = "wal-player"
+CSS_TEMPLATE_PATH = Path(__file__).with_name("adria_music_player.css")
+IPC_SOCKET_PATH = Path(tempfile.gettempdir()) / f"adria-music-player-mpv-{os.getpid()}.sock"
+APP_ID = "com.adria.musicplayer"
 AUDIO_EXTENSIONS = {".mp3", ".flac", ".ogg", ".wav", ".m4a", ".opus"}
 COVER_SIZE = 100
 WINDOW_WIDTH = 388
@@ -218,7 +219,7 @@ class WalThemeManager:
         try:
             return CSS_TEMPLATE_PATH.read_text(encoding="utf-8")
         except OSError:
-            return "window#wal-player-window { background: __WAL_WINDOW_BG__; color: __WAL_FOREGROUND__; }"
+            return "window#adria-music-player-window { background: __WAL_WINDOW_BG__; color: __WAL_FOREGROUND__; }"
 
     def _build_css(self, colors: dict) -> str:
         replacements = {
@@ -376,7 +377,7 @@ class MPVController:
                     "--no-video",
                     "--force-window=no",
                     "--input-ipc-server=" + self.socket_path,
-                    "--title=wal-player",
+                    "--title=adria-music-player",
                     *([f"--script={self.mpris_script_path}"] if self.mpris_script_path else []),
                 ],
                 stdout=subprocess.DEVNULL,
@@ -408,6 +409,9 @@ class MPVController:
     def playlist_shuffle(self):
         self._send_command(["playlist-shuffle"])
 
+    def playlist_move(self, from_index: int, to_index: int):
+        self._send_command(["playlist-move", int(from_index), int(to_index)])
+
     def set_loop_playlist(self, enabled: bool):
         value = "inf" if enabled else "no"
         self._send_command(["set_property", "loop-playlist", value])
@@ -431,6 +435,20 @@ class MPVController:
             return int(resp["data"])
         except (TypeError, ValueError):
             return -1
+
+    def get_playlist_paths(self) -> list[str]:
+        resp = self._send_command(["get_property", "playlist"])
+        if not resp or "data" not in resp or not isinstance(resp["data"], list):
+            return []
+
+        items = []
+        for entry in resp["data"]:
+            if not isinstance(entry, dict):
+                continue
+            filename = entry.get("filename")
+            if filename:
+                items.append(str(filename))
+        return items
 
     def get_current_path(self) -> str | None:
         resp = self._send_command(["get_property", "path"])
@@ -660,13 +678,13 @@ class MusicPlayerView(Adw.ApplicationWindow):
         super().__init__(application=app)
         self._marquee_sources = {}
 
-        self.set_title("Wal Player")
+        self.set_title("Adria Music Player")
         self.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.set_resizable(False)
         self.set_decorated(False)
-        self.set_name("wal-player-window")
-        self.set_startup_id("wal-player")
+        self.set_name("adria-music-player-window")
+        self.set_startup_id("adria-music-player")
 
         self.root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.root.add_css_class("wal-root")
@@ -683,6 +701,7 @@ class MusicPlayerView(Adw.ApplicationWindow):
 
         self.main_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.main_row.add_css_class("main-row")
+        self.main_row.set_spacing(14)
         self.main_row.set_valign(Gtk.Align.START)
 
         self.cover_stack = Gtk.Stack()
@@ -706,10 +725,12 @@ class MusicPlayerView(Adw.ApplicationWindow):
 
         self.info_col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.info_col.add_css_class("info-col")
+        self.info_col.set_spacing(8)
         self.info_col.set_valign(Gtk.Align.START)
 
         self.header_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.header_row.add_css_class("header-row")
+        self.header_row.set_spacing(8)
 
         self.text_col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.text_col.add_css_class("text-col")
@@ -718,6 +739,7 @@ class MusicPlayerView(Adw.ApplicationWindow):
 
         self.download_buttons_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.download_buttons_box.add_css_class("download-buttons-box")
+        self.download_buttons_box.set_spacing(4)
         self.download_buttons_box.set_valign(Gtk.Align.START)
 
         self.title_label = Gtk.Label(label="No file loaded")
@@ -736,6 +758,7 @@ class MusicPlayerView(Adw.ApplicationWindow):
 
         self.controls = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.controls.add_css_class("controls")
+        self.controls.set_spacing(12)
 
         self.btn_load = Gtk.Button(icon_name="folder-open-symbolic")
         self.btn_load.add_css_class("wal-btn")
@@ -754,8 +777,9 @@ class MusicPlayerView(Adw.ApplicationWindow):
         self.btn_stop = Gtk.Button(icon_name="media-playback-stop-symbolic")
         self.btn_stop.add_css_class("wal-btn")
 
-        self.btn_shuffle = Gtk.Button(icon_name="media-playlist-shuffle-symbolic")
+        self.btn_shuffle = Gtk.ToggleButton(icon_name="media-playlist-shuffle-symbolic")
         self.btn_shuffle.add_css_class("wal-btn")
+        self.btn_shuffle.add_css_class("shuffle-btn")
         self.btn_shuffle.set_tooltip_text("Shuffle playlist")
 
         self.controls.append(self.btn_load)
@@ -945,13 +969,14 @@ class MusicPlayerController:
         self.is_user_seeking = False
         self.last_seek_interaction_us = 0
         self.current_index = -1
+        self.base_playlist_order: list[str] = []
 
         self.view.btn_load.connect("clicked", self._on_load_clicked)
         self.view.btn_prev.connect("clicked", self._on_prev_clicked)
         self.view.btn_play_pause.connect("clicked", self._on_play_pause_clicked)
         self.view.btn_next.connect("clicked", self._on_next_clicked)
         self.view.btn_stop.connect("clicked", self._on_stop_clicked)
-        self.view.btn_shuffle.connect("clicked", self._on_shuffle_clicked)
+        self.view.btn_shuffle.connect("toggled", self._on_shuffle_toggled)
         self.view.download_youtube_button.connect("clicked", self._on_download_youtube_clicked)
         self.view.download_spotify_button.connect("clicked", self._on_download_spotify_clicked)
         self.view.progress.connect("value-changed", self._on_progress_changed)
@@ -994,11 +1019,14 @@ class MusicPlayerController:
         tracks = self.model.load_folder_tracks(folderpath)
         if not tracks:
             self.current_index = -1
+            self.base_playlist_order = []
             self.view.show_error("The selected folder does not contain supported audio files.")
             return
 
         first_track = tracks[0]
         self.current_index = 0
+        self.base_playlist_order = list(tracks)
+        self.view.btn_shuffle.set_active(False)
         self.model.load_track_metadata(first_track)
         self._apply_track_visuals()
 
@@ -1079,10 +1107,73 @@ class MusicPlayerController:
         self.view.update_play_state(False)
         self.view.update_progress(0.0)
 
-    def _on_shuffle_clicked(self, _button):
-        if not self.model.state.playlist:
+    def _on_shuffle_toggled(self, button):
+        if not button.get_active():
+            if (
+                len(self.base_playlist_order) == len(self.model.state.playlist)
+                and len(self.base_playlist_order) > 1
+            ):
+                self._reorder_playlist(self.base_playlist_order)
             return
-        self.mpv.playlist_shuffle()
+        if len(self.model.state.playlist) < 2:
+            button.set_active(False)
+            return
+        current_pos = self.mpv.get_playlist_pos()
+        if current_pos < 0:
+            current_pos = self.current_index
+        if current_pos < 0 or current_pos >= len(self.model.state.playlist):
+            current_pos = 0
+
+        playlist = list(self.model.state.playlist)
+        size = len(playlist)
+        cycle_slots = list(range(current_pos + 1, size)) + list(range(0, current_pos))
+        if not cycle_slots:
+            return
+
+        shuffled_upcoming = [playlist[i] for i in cycle_slots]
+        random.shuffle(shuffled_upcoming)
+
+        desired_order = list(playlist)
+        for slot, track in zip(cycle_slots, shuffled_upcoming):
+            desired_order[slot] = track
+
+        self._reorder_playlist(desired_order)
+        self.current_index = current_pos
+
+    def _reorder_playlist(self, desired_order: list[str]):
+        if not desired_order or len(desired_order) != len(self.model.state.playlist):
+            return
+
+        current_mpv = self.mpv.get_playlist_paths()
+        if len(current_mpv) != len(desired_order):
+            current_mpv = list(self.model.state.playlist)
+
+        working = list(current_mpv)
+        for target_idx, wanted in enumerate(desired_order):
+            try:
+                source_idx = working.index(wanted, target_idx)
+            except ValueError:
+                continue
+            if source_idx == target_idx:
+                continue
+            self.mpv.playlist_move(source_idx, target_idx)
+            moved = working.pop(source_idx)
+            working.insert(target_idx, moved)
+
+        self.model.state.playlist = list(desired_order)
+
+        current_path = self.mpv.get_current_path()
+        if not current_path:
+            return
+        current_path = str(Path(current_path).resolve())
+        try:
+            self.current_index = next(
+                i
+                for i, p in enumerate(self.model.state.playlist)
+                if str(Path(p).resolve()) == current_path
+            )
+        except StopIteration:
+            pass
 
     def _on_download_youtube_clicked(self, _button):
         self._open_download_dialog("youtube")
@@ -1147,6 +1238,8 @@ class MusicPlayerController:
             for filepath in files:
                 if filepath not in self.model.state.playlist:
                     self.model.state.playlist.append(filepath)
+                    if filepath not in self.base_playlist_order:
+                        self.base_playlist_order.append(filepath)
                     self.mpv.append_file(filepath)
         if ok:
             dialog = Adw.MessageDialog.new(self.view, "Download complete", message)
@@ -1232,7 +1325,7 @@ class WalPlayerApp(Adw.Application):
 
 
 def main():
-    GLib.set_prgname("wal-player")
+    GLib.set_prgname("adria-music-player")
     app = WalPlayerApp()
     return app.run(None)
 

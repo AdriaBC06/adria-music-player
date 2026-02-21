@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Adria Music Player
+Comment=Floating GTK4 music player
+Exec=adria-music-player
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+StartupWMClass=adria-music-player

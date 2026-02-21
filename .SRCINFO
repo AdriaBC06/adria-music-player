@@ -1,0 +1,26 @@
+pkgbase = adria-music-player
+	pkgdesc = Minimal GTK4/libadwaita floating music player with mpv + wal theme sync
+	pkgver = 0.1.0
+	pkgrel = 1
+	url = https://github.com/adria/adria-music-player
+	arch = any
+	license = MIT
+	depends = python
+	depends = python-gobject
+	depends = gtk4
+	depends = libadwaita
+	depends = mpv
+	depends = python-mutagen
+	depends = yt-dlp
+	depends = ffmpeg
+	depends = mpv-mpris
+	source = adria_music_player.py
+	source = adria_music_player.css
+	source = adria-music-player.desktop
+	source = README.md
+	sha256sums = SKIP
+	sha256sums = SKIP
+	sha256sums = SKIP
+	sha256sums = SKIP
+
+pkgname = adria-music-player

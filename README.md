@@ -1,4 +1,4 @@
-# Wal Player
+# Adria Music Player
 
 Minimal floating desktop music player for Linux (Wayland/Hyprland), built with:
 
@@ -30,8 +30,12 @@ sudo pacman -S python python-gobject gtk4 libadwaita mpv python-mutagen yt-dlp f
 ## Run
 
 ```bash
-GDK_BACKEND=wayland python wal_player.py
+GDK_BACKEND=wayland python adria_music_player.py
 ```
+
+## Package Name
+
+Use `adria-music-player` as the package name when you recreate the Arch package.
 
 ## Notes
 
@@ -41,5 +45,5 @@ GDK_BACKEND=wayland python wal_player.py
 
 ## Files
 
-- `wal_player.py`: app logic (MVC + theming + mpv/yt-dlp integration)
-- `wal_player.css`: visual styling template
+- `adria_music_player.py`: app logic (MVC + theming + mpv/yt-dlp integration)
+- `adria_music_player.css`: visual styling template
