@@ -1,0 +1,250 @@
+/*
+  Refined Wal Player – Glass version
+  Designed for Hyprland blur + wal dynamic colors
+*/
+
+window#wal-player-window {
+  background: __WAL_BACKGROUND__;
+}
+
+/* ROOT CONTAINER */
+.wal-root {
+  background: __WAL_BACKGROUND__;
+  color: __WAL_FOREGROUND__;
+
+  min-width: 388px;
+  min-height: 110px;
+
+  margin: 0;
+  padding: 16px;
+
+  border-radius: 0;
+  border: 1px solid rgba(__WAL_FOREGROUND_RGB__, 0.10);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -16px 28px rgba(__WAL_COLOR4_RGB__, 0.06);
+
+  border-spacing: 12px;
+}
+
+/* MAIN ROW */
+.main-row {
+  spacing: 14px;
+  margin-bottom: 0;
+}
+
+.header-row {
+  spacing: 8px;
+  margin-bottom: 10px;
+}
+
+.download-buttons-box {
+  spacing: 4px;
+}
+
+/* COVER */
+.cover-stack,
+.cover-frame,
+.placeholder {
+  min-width: 100px;
+  min-height: 100px;
+}
+
+.cover-stack {
+  margin-left: 6px;
+  margin-right: 10px;
+  margin-top: 0;
+}
+
+.cover-frame {
+  border-radius: 16px;
+  overflow: hidden;
+
+  background: rgba(__WAL_FOREGROUND_RGB__, 0.04);
+  border: 1px solid rgba(__WAL_FOREGROUND_RGB__, 0.06);
+}
+
+.cover-picture {
+  border-radius: 16px;
+}
+
+/* Placeholder más sutil */
+.placeholder {
+  border-radius: 16px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(__WAL_COLOR2_RGB__, 0.7),
+    rgba(__WAL_COLOR5_RGB__, 0.7)
+  );
+
+  color: __WAL_FOREGROUND__;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+/* INFO COLUMN */
+.info-col {
+  spacing: 8px;
+}
+
+/* TITLE */
+.title {
+  color: __WAL_FOREGROUND__;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+
+/* ARTIST */
+.artist {
+  color: rgba(__WAL_FOREGROUND_RGB__, 0.65);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* CONTROLS */
+.controls {
+  spacing: 12px;
+  margin-top: 0;
+}
+
+/* BUTTONS */
+button.wal-btn {
+  background: rgba(__WAL_FOREGROUND_RGB__, 0.06);
+  color: __WAL_FOREGROUND__;
+
+  border-radius: 999px;
+  border: 1px solid rgba(__WAL_FOREGROUND_RGB__, 0.08);
+
+  min-width: 36px;
+  min-height: 36px;
+
+  margin-left: 2px;
+  margin-right: 2px;
+
+  transition: 120ms ease;
+}
+
+button.wal-btn:hover {
+  background: rgba(__WAL_COLOR4_RGB__, 0.25);
+  border-color: rgba(__WAL_COLOR4_RGB__, 0.35);
+}
+
+button.youtube-btn {
+  background: rgba(__WAL_COLOR1_RGB__, 0.30);
+  border: 1px solid rgba(__WAL_COLOR1_RGB__, 0.45);
+}
+
+button.spotify-btn {
+  background: rgba(__WAL_COLOR2_RGB__, 0.30);
+  border: 1px solid rgba(__WAL_COLOR2_RGB__, 0.45);
+}
+
+button.wal-btn:active {
+  background: rgba(__WAL_COLOR4_RGB__, 0.45);
+  color: __WAL_BACKGROUND__;
+}
+
+/* DOWNLOAD DIALOG URL FIELD */
+.download-dialog {
+  background: rgba(__WAL_BACKGROUND_RGB__, 0.90);
+  border: 1px solid rgba(__WAL_FOREGROUND_RGB__, 0.12);
+  border-radius: 14px;
+}
+
+.download-dialog-content {
+  background: transparent;
+  min-width: 280px;
+}
+
+.download-dialog-title {
+  color: __WAL_FOREGROUND__;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.download-status-row {
+  min-height: 18px;
+}
+
+entry.download-url-entry {
+  background: rgba(__WAL_FOREGROUND_RGB__, 0.10);
+  color: __WAL_FOREGROUND__;
+  border: 1px solid rgba(__WAL_FOREGROUND_RGB__, 0.22);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+entry.download-url-entry:focus {
+  border-color: rgba(__WAL_COLOR4_RGB__, 0.70);
+  box-shadow: 0 0 0 1px rgba(__WAL_COLOR4_RGB__, 0.35);
+}
+
+entry.download-url-entry placeholder {
+  color: rgba(__WAL_FOREGROUND_RGB__, 0.55);
+}
+
+button.download-action-btn {
+  border-radius: 10px;
+  min-height: 32px;
+}
+
+button.download-cancel-btn {
+  background: rgba(__WAL_FOREGROUND_RGB__, 0.08);
+  color: __WAL_FOREGROUND__;
+  border: 1px solid rgba(__WAL_FOREGROUND_RGB__, 0.16);
+}
+
+button.download-confirm-btn-yt {
+  background: #ff0000;
+  color: #ffffff;
+  border: 1px solid #cc0000;
+}
+
+button.download-confirm-btn-yt:hover {
+  background: #e10000;
+}
+
+button.download-confirm-btn-spotify {
+  background: #1db954;
+  color: #ffffff;
+  border: 1px solid #169c46;
+}
+
+button.download-confirm-btn-spotify:hover {
+  background: #1aa34a;
+}
+
+/* PROGRESS BAR */
+scale.wal-progress {
+  margin-top: 4px;
+}
+
+/* Trough */
+scale.wal-progress trough {
+  min-height: 6px;
+  border-radius: 999px;
+
+  background: rgba(__WAL_FOREGROUND_RGB__, 0.08);
+}
+
+/* Highlight */
+scale.wal-progress highlight {
+  background: rgba(__WAL_COLOR4_RGB__, 0.9);
+  border-radius: 999px;
+}
+
+/* Slider */
+scale.wal-progress slider {
+  min-width: 12px;
+  min-height: 12px;
+
+  border-radius: 999px;
+
+  background: __WAL_FOREGROUND__;
+  border: 1px solid rgba(__WAL_BACKGROUND_RGB__, 0.4);
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
