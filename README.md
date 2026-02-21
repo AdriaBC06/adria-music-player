@@ -33,9 +33,26 @@ sudo pacman -S python python-gobject gtk4 libadwaita mpv python-mutagen yt-dlp f
 GDK_BACKEND=wayland python adria_music_player.py
 ```
 
-## Package Name
+Installed package / command:
 
-Use `adria-music-player` as the package name when you recreate the Arch package.
+```bash
+adria-music-player
+```
+
+## Arch Package
+
+This repository already includes Arch packaging files:
+
+- `PKGBUILD`
+- `.SRCINFO`
+- `adria-music-player.desktop`
+
+Build and install:
+
+```bash
+makepkg -f
+sudo pacman -U adria-music-player-0.1.0-1-any.pkg.tar.zst
+```
 
 ## Notes
 
