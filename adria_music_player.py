@@ -41,6 +41,8 @@ WINDOW_WIDTH = 388
 WINDOW_HEIGHT = 110
 TEXT_VIEW_CHARS = 26
 MARQUEE_TICK_MS = 140
+DEFAULT_TITLE = "No file loaded"
+DEFAULT_ARTIST = "Unknown artist"
 
 
 @dataclass
@@ -48,8 +50,8 @@ class TrackState:
     path: str = ""
     folder_path: str = ""
     playlist: list[str] = field(default_factory=list)
-    title: str = "No file loaded"
-    artist: str = "Unknown artist"
+    title: str = DEFAULT_TITLE
+    artist: str = DEFAULT_ARTIST
     cover_data: bytes | None = None
     is_playing: bool = False
     progress_fraction: float = 0.0
@@ -79,9 +81,12 @@ class WalThemeManager:
         clean = hex_color.lstrip("#")
         if len(clean) != 6:
             return f"rgba(26, 26, 26, {alpha})"
-        r = int(clean[0:2], 16)
-        g = int(clean[2:4], 16)
-        b = int(clean[4:6], 16)
+        try:
+            r = int(clean[0:2], 16)
+            g = int(clean[2:4], 16)
+            b = int(clean[4:6], 16)
+        except ValueError:
+            return f"rgba(26, 26, 26, {alpha})"
         return f"rgba({r}, {g}, {b}, {alpha})"
 
     @staticmethod
@@ -89,9 +94,12 @@ class WalThemeManager:
         clean = hex_color.lstrip("#")
         if len(clean) != 6:
             return "26, 26, 26"
-        r = int(clean[0:2], 16)
-        g = int(clean[2:4], 16)
-        b = int(clean[4:6], 16)
+        try:
+            r = int(clean[0:2], 16)
+            g = int(clean[2:4], 16)
+            b = int(clean[4:6], 16)
+        except ValueError:
+            return "26, 26, 26"
         return f"{r}, {g}, {b}"
 
     @staticmethod
@@ -323,7 +331,7 @@ class MPVController:
 
     @staticmethod
     def _mpv_exists() -> bool:
-        return subprocess.call(["sh", "-c", "command -v mpv >/dev/null 2>&1"]) == 0
+        return shutil.which("mpv") is not None
 
     def _send_command(self, command):
         if self.process is None or self.process.poll() is not None:
@@ -556,11 +564,15 @@ class DownloadManager:
         destination.mkdir(parents=True, exist_ok=True)
         output_template = str(destination / "%(title)s.%(ext)s")
         command = self._build_command(source, url, output_template)
-        existing_audio = {
-            str(p.resolve())
-            for p in destination.iterdir()
-            if p.is_file() and p.suffix.lower() in AUDIO_EXTENSIONS
-        }
+        try:
+            existing_audio = {
+                str(p.resolve())
+                for p in destination.iterdir()
+                if p.is_file() and p.suffix.lower() in AUDIO_EXTENSIONS
+            }
+        except OSError as exc:
+            on_finished(False, f"Could not inspect the destination folder: {exc}", [])
+            return
 
         self._active = True
         self._worker = threading.Thread(
@@ -604,13 +616,17 @@ class DownloadManager:
         code = process.wait()
         self._active = False
         if code == 0:
-            new_audio = sorted(
-                str(p.resolve())
-                for p in destination.iterdir()
-                if p.is_file()
-                and p.suffix.lower() in AUDIO_EXTENSIONS
-                and str(p.resolve()) not in existing_audio
-            )
+            try:
+                new_audio = sorted(
+                    str(p.resolve())
+                    for p in destination.iterdir()
+                    if p.is_file()
+                    and p.suffix.lower() in AUDIO_EXTENSIONS
+                    and str(p.resolve()) not in existing_audio
+                )
+            except OSError as exc:
+                GLib.idle_add(on_finished, False, f"Download finished, but the folder could not be refreshed: {exc}", [])
+                return
             GLib.idle_add(on_finished, True, "Download completed.", new_audio)
             return
 
@@ -626,22 +642,27 @@ class PlayerModel:
 
     def load_folder_tracks(self, folderpath: str) -> list[str]:
         folder = Path(folderpath)
-        self.state.folder_path = str(folder)
+        self.state.folder_path = str(folder.resolve())
         tracks = sorted(
-            str(p) for p in folder.iterdir() if p.is_file() and p.suffix.lower() in AUDIO_EXTENSIONS
+            str(p.resolve()) for p in folder.iterdir() if p.is_file() and p.suffix.lower() in AUDIO_EXTENSIONS
         )
         self.state.playlist = tracks
         if not tracks:
-            self.state.path = ""
-            self.state.title = "No file loaded"
-            self.state.artist = "Unknown artist"
-            self.state.cover_data = None
+            self.clear_loaded_track()
         return tracks
+
+    def clear_loaded_track(self):
+        self.state.path = ""
+        self.state.title = DEFAULT_TITLE
+        self.state.artist = DEFAULT_ARTIST
+        self.state.cover_data = None
+        self.state.is_playing = False
+        self.state.progress_fraction = 0.0
 
     def load_track_metadata(self, filepath: str):
         self.state.path = filepath
         self.state.title = Path(filepath).stem
-        self.state.artist = "Unknown artist"
+        self.state.artist = DEFAULT_ARTIST
         self.state.cover_data = None
 
         try:
@@ -1016,10 +1037,23 @@ class MusicPlayerController:
         if not folderpath:
             return
 
-        tracks = self.model.load_folder_tracks(folderpath)
+        try:
+            tracks = self.model.load_folder_tracks(folderpath)
+        except OSError as err:
+            self.model.clear_loaded_track()
+            self._apply_track_visuals()
+            self.view.update_play_state(False)
+            self.view.update_progress(0.0)
+            self.view.show_error(f"Could not read the selected folder:\n{err}")
+            return
+
         if not tracks:
             self.current_index = -1
             self.base_playlist_order = []
+            self.model.clear_loaded_track()
+            self._apply_track_visuals()
+            self.view.update_play_state(False)
+            self.view.update_progress(0.0)
             self.view.show_error("The selected folder does not contain supported audio files.")
             return
 
@@ -1096,6 +1130,9 @@ class MusicPlayerController:
         self._set_current_track_from_index()
 
     def _on_play_pause_clicked(self, _button):
+        if not self.model.state.playlist:
+            self.view.show_error("Load a music folder before trying to play audio.")
+            return
         self.mpv.toggle_play_pause()
         self.model.state.is_playing = not self.model.state.is_playing
         self.view.update_play_state(self.model.state.is_playing)
