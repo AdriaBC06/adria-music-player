@@ -1,8 +1,10 @@
 [Desktop Entry]
 Type=Application
 Name=Adria Music Player
-Comment=Floating GTK4 music player
+Comment=Minimal GTK4 music player for Linux
 Exec=adria-music-player
 Terminal=false
 Categories=AudioVideo;Audio;Player;
+Keywords=music;audio;player;mpv;gtk;libadwaita;
 StartupWMClass=adria-music-player
+StartupNotify=true

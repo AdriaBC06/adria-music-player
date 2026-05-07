@@ -1,16 +1,25 @@
 # Python cache
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 
 # Virtual environments
 .venv/
 venv/
 env/
+.python-version
 
 # Tool caches
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+dist/
+build/
+site/
 
 # Local editor/OS files
 .DS_Store
@@ -23,5 +32,6 @@ env/
 # Arch build artifacts
 pkg/
 src/
-*.pkg.tar.zst
-*.pkg.tar.zst.sig
+*.pkg.tar.*
+*.pkg.tar.*.sig
+*.src.tar.*
