@@ -5,7 +5,7 @@
 ![libadwaita](https://img.shields.io/badge/libadwaita-Adwaita-5c6bc0)
 ![Linux](https://img.shields.io/badge/Linux-Desktop-fcc624?logo=linux&logoColor=black)
 ![Arch Linux](https://img.shields.io/badge/Arch-makepkg-1793d1?logo=arch-linux&logoColor=white)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 Minimal personal music player for Linux built with Python, GTK4, and libadwaita. It is designed as a compact desktop player for local folders, with `mpv` handling playback, `mutagen` reading metadata and embedded cover art, and optional helpers for downloads and MPRIS integration.
 
@@ -186,7 +186,7 @@ Suggested topics:
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE).
+This project is licensed under the GNU General Public License v3.0 or later. See [LICENSE](LICENSE).
 
 ## Author
 

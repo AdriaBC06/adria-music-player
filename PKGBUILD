@@ -5,7 +5,7 @@ pkgrel=1
 pkgdesc='Minimal GTK4/libadwaita music player for Linux powered by mpv'
 arch=('any')
 url='https://github.com/AdriaBC06/adria-music-player'
-license=('MIT')
+license=('GPL-3.0-or-later')
 depends=(
   'python'
   'python-gobject'
